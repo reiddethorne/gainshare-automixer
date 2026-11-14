@@ -38,4 +38,7 @@ jobs:
         run: cmake -S . -B build ${{ matrix.cmake_args }}
 
       - name: Build Release
-        run: cmake --build build --config Release --target DuganAutomixer_Standalone
+        run: cmake --build build --config Release --target DuganAutomixer_Standalone DuganAutomixerDspTests
+
+      - name: Run DSP tests
+        run: ctest --test-dir build -C Release --output-on-failure

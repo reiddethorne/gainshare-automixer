@@ -84,17 +84,30 @@ The release application is written to `build/macos/DuganAutomixer_artefacts/Rele
 
 The application requires an audio interface with at least four discrete inputs and two outputs. Both outputs carry the same mono mix.
 
+## DSP tests
+
+The console test runner processes generated signals directly through the processor; no audio interface is needed. It covers silence, equal inputs, a single active input, muted-input isolation, bypass, output trim, and identical stereo output at 44.1, 48, and 96 kHz with 32, 128, and 512 sample buffers (63 test cases).
+
+After configuring a build directory, build and run the tests with:
+
+```sh
+cmake --build build/macos --config Release --target DuganAutomixerDspTests
+ctest --test-dir build/macos -C Release --output-on-failure
+```
+
+On Windows, substitute `build/windows` for `build/macos`. Tests are enabled by default; configure with `-DBUILD_TESTING=OFF` to omit the test target. Both CI platforms run the tests in Release builds.
+
 ## Current limitations
 
 - The channel layout is fixed at four inputs and two identical outputs.
-- Windows builds are configured but have not yet been built or tested on Windows.
 - There is no output limiter, so bypassing automix may require additional headroom.
-- Automated DSP tests and callback benchmarks are still to be added.
+- Callback benchmarks are still to be added.
 
-My next step is to add signal-based regression tests across sample rates and buffer sizes, then measure worst-case callback time rather than making assumptions about performance.
+My next step is to measure worst-case callback time rather than making assumptions about performance.
 
 ## Code guide
 
 - [`Source/PluginProcessor.cpp`](Source/PluginProcessor.cpp): DSP, metering, bus layout, and state recall
 - [`Source/PluginProcessor.h`](Source/PluginProcessor.h): processor state and audio/UI communication
 - [`Source/PluginEditor.cpp`](Source/PluginEditor.cpp): controls, meters, and interface layout
+- [`Tests/DspTests.cpp`](Tests/DspTests.cpp): signal-based DSP regression tests

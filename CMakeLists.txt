@@ -59,3 +59,23 @@ target_link_libraries(DuganAutomixer
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags)
+
+include(CTest)
+
+if(BUILD_TESTING)
+    add_executable(DuganAutomixerDspTests Tests/DspTests.cpp)
+    target_compile_features(DuganAutomixerDspTests PRIVATE cxx_std_17)
+    target_include_directories(DuganAutomixerDspTests PRIVATE Source
+        $<TARGET_PROPERTY:DuganAutomixer,JUCE_GENERATED_SOURCES_DIRECTORY>)
+    target_link_libraries(DuganAutomixerDspTests PRIVATE
+        DuganAutomixer juce::juce_audio_utils)
+
+    foreach(sample_rate IN ITEMS 44100 48000 96000)
+        foreach(block_size IN ITEMS 32 128 512)
+            foreach(test_case IN ITEMS silence equal_inputs single_input muted_input bypass output_trim stereo)
+                add_test(NAME dsp.${test_case}.${sample_rate}.${block_size}
+                    COMMAND DuganAutomixerDspTests ${test_case} ${sample_rate} ${block_size})
+            endforeach()
+        endforeach()
+    endforeach()
+endif()
