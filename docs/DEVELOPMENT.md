@@ -28,12 +28,12 @@ The part I found most interesting was keeping the audio callback separate from t
 
 ## DSP tests
 
-The console test runner processes generated signals directly through the processor; no audio interface is needed. It covers silence, equal inputs, a single active input, muted-input isolation, bypass, output trim, and identical stereo output at 44.1, 48, and 96 kHz with 32, 128, and 512 sample buffers (63 test cases).
+The console test runner processes generated signals directly through the processor; no audio interface is needed. It covers silence, equal inputs, a single active input, muted-input isolation, bypass, output trim, and identical stereo output at 44.1, 48, and 96 kHz with 32, 128, and 512 sample buffers (63 signal-processing cases), plus a session-recall test for both the current and legacy saved-state formats (64 tests total).
 
 Run these commands from the repository root after configuring the build directory as described in the README:
 
 ```sh
-cmake --build build/macos --config Release --target DuganAutomixerDspTests
+cmake --build build/macos --config Release --target GainShareAutomixerDspTests
 ctest --test-dir build/macos -C Release --output-on-failure
 ```
 
@@ -41,22 +41,22 @@ On Windows, substitute `build/windows` for `build/macos`. Tests are enabled by d
 
 ## Callback benchmark
 
-The separate `DuganAutomixerDspBenchmark` target measures `processBlock()` in Release mode. It runs silence, four active inputs, changing speakers, and mute/bypass/output-gain changes across the same nine sample-rate/buffer-size combinations as the tests. Each scenario warms up with two seconds of generated audio, then measures 10,000 callbacks by default. Inputs and timing storage are preallocated; signal preparation, control setters, and reporting are outside the timed section.
+The separate `GainShareAutomixerDspBenchmark` target measures `processBlock()` in Release mode. It runs silence, four active inputs, changing speakers, and mute/bypass/output-gain changes across the same nine sample-rate/buffer-size combinations as the tests. Each scenario warms up with two seconds of generated audio, then measures 10,000 callbacks by default. Inputs and timing storage are preallocated; signal preparation, control setters, and reporting are outside the timed section.
 
 From the repository root, after configuring the macOS Xcode build described in the README:
 
 ```sh
-cmake --build build/macos --config Release --target DuganAutomixerDspBenchmark
-./build/macos/benchmarks/Release/DuganAutomixerDspBenchmark > build/macos/benchmark.csv
+cmake --build build/macos --config Release --target GainShareAutomixerDspBenchmark
+./build/macos/benchmarks/Release/GainShareAutomixerDspBenchmark > build/macos/benchmark.csv
 ```
 
 On Windows, build the same target in `build/windows`, then run:
 
 ```powershell
-./build/windows/benchmarks/Release/DuganAutomixerDspBenchmark.exe > build/windows/benchmark.csv
+./build/windows/benchmarks/Release/GainShareAutomixerDspBenchmark.exe > build/windows/benchmark.csv
 ```
 
-Pass a callback count (for example, `DuganAutomixerDspBenchmark 100000`) for a longer run. The output contains machine metadata followed by CSV columns for median, p95, p99, maximum observed callback time, the callback deadline (`buffer size / sample rate`), maximum time as a percentage of that deadline, and the number of measurements exceeding it. Times are in microseconds. Lines starting with `#` are metadata; the checksum keeps processed audio observable during optimisation.
+Pass a callback count (for example, `GainShareAutomixerDspBenchmark 100000`) for a longer run. The output contains machine metadata followed by CSV columns for median, p95, p99, maximum observed callback time, the callback deadline (`buffer size / sample rate`), maximum time as a percentage of that deadline, and the number of measurements exceeding it. Times are in microseconds. Lines starting with `#` are metadata; the checksum keeps processed audio observable during optimisation.
 
 Run on an otherwise quiet machine and repeat to assess variation. The timer overhead is included, and operating-system interruptions can inflate individual measurements. This is an offline DSP benchmark: callbacks run as fast as possible, without an audio driver, UI, or concurrent meter reader. A maximum observed time is not a guaranteed worst case, and an over-deadline measurement is not a recorded hardware dropout. Validate live playback separately with your interface, meters, and controls. The benchmark is excluded from the default build and CTest/CI performance thresholds.
 

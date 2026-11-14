@@ -15,14 +15,14 @@
 //==============================================================================
 /**
 */
-class DuganAutomixerAudioProcessor  : public juce::AudioProcessor
+class GainShareAutomixerAudioProcessor  : public juce::AudioProcessor
 {
 public:
     static constexpr int automixerChannelCount = 4; // Number of channels for the automixer
 
     //==============================================================================
-    DuganAutomixerAudioProcessor();
-    ~DuganAutomixerAudioProcessor() override;
+    GainShareAutomixerAudioProcessor();
+    ~GainShareAutomixerAudioProcessor() override;
 
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
@@ -113,5 +113,5 @@ private:
     juce::SmoothedValue<float> bypassMix {1.0f};
     juce::SmoothedValue<float> outputGain {1.0f};
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DuganAutomixerAudioProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GainShareAutomixerAudioProcessor)
 };

@@ -8,7 +8,7 @@
 
 namespace
 {
-using Inputs = std::array<float, DuganAutomixerAudioProcessor::automixerChannelCount>;
+using Inputs = std::array<float, GainShareAutomixerAudioProcessor::automixerChannelCount>;
 
 void expectNear (float actual, float expected, float tolerance, const std::string& description)
 {
@@ -80,7 +80,7 @@ struct Fixture
                  });
     }
 
-    DuganAutomixerAudioProcessor processor;
+    GainShareAutomixerAudioProcessor processor;
     double sampleRate;
     int blockSize;
     juce::AudioBuffer<float> buffer;
@@ -173,6 +173,32 @@ void runTest (const std::string& name, Fixture& f)
             f.expectOutput (inputs, expected);
         }
     }
+    else if (name == "state_recall")
+    {
+        f.processor.setOutputGainDb (-6.0f);
+        f.processor.setAutomixerBypassed (true);
+        f.processor.setChannelMuted (2, true);
+        f.processor.setInputName (2, "Panel microphone", false);
+        juce::MemoryBlock saved;
+        f.processor.getStateInformation (saved);
+        const auto xml = juce::AudioProcessor::getXmlFromBinary (
+            saved.getData(), static_cast<int> (saved.getSize()));
+        if (xml == nullptr || ! xml->hasTagName ("GainShareAutomixerState"))
+            throw std::runtime_error ("Saved state must use the new application name");
+
+        // Existing manually saved sessions should still load after the rename.
+        for (const auto* tag : { "GainShareAutomixerState", "DuganAutomixerState" })
+        {
+            xml->setTagName (tag);
+            juce::AudioProcessor::copyXmlToBinary (*xml, saved);
+            GainShareAutomixerAudioProcessor restored;
+            restored.setStateInformation (saved.getData(), static_cast<int> (saved.getSize()));
+            expectNear (restored.getOutputGainDb(), -6.0f, 0.0f, "Restored output gain");
+            if (! restored.isAutomixerBypassed() || ! restored.isChannelMuted (2)
+                || restored.getInputName (2) != "Panel microphone")
+                throw std::runtime_error ("Renamed or legacy session failed to restore");
+        }
+    }
     else if (name == "stereo")
     {
         const auto signal = [&f] (int sample)
@@ -203,7 +229,7 @@ int main (int argc, char* argv[])
 {
     if (argc != 4)
     {
-        std::cerr << "Usage: DuganAutomixerDspTests <case> <sample-rate> <block-size>\n";
+        std::cerr << "Usage: GainShareAutomixerDspTests <case> <sample-rate> <block-size>\n";
         return 1;
     }
 

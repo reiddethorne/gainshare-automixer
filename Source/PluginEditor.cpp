@@ -364,7 +364,7 @@ void ChannelStrip::resized()
 }
 
 //==============================================================================
-DuganAutomixerAudioProcessorEditor::DuganAutomixerAudioProcessorEditor (DuganAutomixerAudioProcessor& p)
+GainShareAutomixerAudioProcessorEditor::GainShareAutomixerAudioProcessorEditor (GainShareAutomixerAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
     // Make sure that before the constructor has finished, you've set the
@@ -449,14 +449,14 @@ DuganAutomixerAudioProcessorEditor::DuganAutomixerAudioProcessorEditor (DuganAut
     addAndMakeVisible (outputGainSlider);
 }
 
-DuganAutomixerAudioProcessorEditor::~DuganAutomixerAudioProcessorEditor()
+GainShareAutomixerAudioProcessorEditor::~GainShareAutomixerAudioProcessorEditor()
 {
     // Stop the timer when the editor is destroyed
     stopTimer();
 }
 
 //==============================================================================
-void DuganAutomixerAudioProcessorEditor::timerCallback()
+void GainShareAutomixerAudioProcessorEditor::timerCallback()
 {
     for (int channel = 0; channel < channelCount; ++channel)
     {
@@ -492,13 +492,13 @@ void DuganAutomixerAudioProcessorEditor::timerCallback()
 }
 
 //==============================================================================
-void DuganAutomixerAudioProcessorEditor::paint (juce::Graphics& g)
+void GainShareAutomixerAudioProcessorEditor::paint (juce::Graphics& g)
 {
     // The editor is opaque, so every background pixel must be painted.
     g.fillAll (juce::Colour (backgroundColour));
 }
 
-void DuganAutomixerAudioProcessorEditor::resized()
+void GainShareAutomixerAudioProcessorEditor::resized()
 {
     // Divide the available area evenly between channels.
     auto area = getLocalBounds().reduced (18);

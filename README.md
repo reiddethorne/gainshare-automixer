@@ -1,12 +1,12 @@
-# DuganAutomixer
+# GainShare Automixer
 
-[![macOS and Windows build and DSP tests](https://github.com/reiddethorne/DuganAutomixer/actions/workflows/build.yml/badge.svg)](https://github.com/reiddethorne/DuganAutomixer/actions/workflows/build.yml)
+[![macOS and Windows build and DSP tests](https://github.com/reiddethorne/gainshare-automixer/actions/workflows/build.yml/badge.svg)](https://github.com/reiddethorne/gainshare-automixer/actions/workflows/build.yml)
 
 A desktop app that automatically balances four microphones. It gives more volume to the person speaking and turns down quieter microphones, then sends the combined mix to both output channels.
 
 I built this project to learn how automatic microphone mixing works and how to process live audio smoothly. It is written in C++17 using JUCE and builds as a standalone app on macOS and Windows.
 
-![App interface with four microphone strips. Each strip has an editable name, input-level meter, applied-gain meter, and mute button. The right side has the automix switch, output meter, and output-volume control.](assets/dugan-automixer-ui.png)
+![App interface with four microphone strips. Each strip has an editable name, input-level meter, applied-gain meter, and mute button. The right side has the automix switch, output meter, and output-volume control.](assets/gainshare-automixer-ui.png)
 
 [Features](#features) · [Build the app](#build-the-app) · [Using the app](#using-the-app) · [Developer guide](docs/DEVELOPMENT.md)
 
@@ -41,27 +41,27 @@ The repository includes JUCE 9.0.2 as a submodule, a dependency that Git downloa
 Open a terminal and run:
 
 ```sh
-git clone --recurse-submodules https://github.com/reiddethorne/DuganAutomixer.git
-cd DuganAutomixer
+git clone --recurse-submodules https://github.com/reiddethorne/gainshare-automixer.git
+cd gainshare-automixer
 ```
 
 If you already cloned the repository, run `git submodule update --init --recursive` from its folder to download JUCE.
 
 ### 2. Build for your platform
 
-Run the following commands from the `DuganAutomixer` folder.
+Run the following commands from the `gainshare-automixer` folder.
 
 #### macOS
 
 ```sh
 cmake -S . -B build/macos -G Xcode
-cmake --build build/macos --config Release --target DuganAutomixer_Standalone
+cmake --build build/macos --config Release --target GainShareAutomixer_Standalone
 ```
 
 Open the built app:
 
 ```sh
-open build/macos/DuganAutomixer_artefacts/Release/Standalone/DuganAutomixer.app
+open "build/macos/GainShareAutomixer_artefacts/Release/Standalone/GainShare Automixer.app"
 ```
 
 To build for both Apple silicon and Intel Macs, add `-DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"` to the configure command (the first command above).
@@ -72,13 +72,13 @@ Run these commands in a Visual Studio Developer PowerShell:
 
 ```powershell
 cmake -S . -B build/windows -A x64
-cmake --build build/windows --config Release --target DuganAutomixer_Standalone
+cmake --build build/windows --config Release --target GainShareAutomixer_Standalone
 ```
 
 Launch the built app:
 
 ```powershell
-./build/windows/DuganAutomixer_artefacts/Release/Standalone/DuganAutomixer.exe
+& "./build/windows/GainShareAutomixer_artefacts/Release/Standalone/GainShare Automixer.exe"
 ```
 
 ## Using the app
@@ -102,7 +102,7 @@ For the equations and implementation details, see [how the gain sharing works](d
 
 ## Tests and performance
 
-The project includes **63 automated DSP (digital signal processing) tests** covering silence, gain sharing, mute, bypass, output volume, and matching outputs. They run at three sample rates and three buffer sizes.
+The project includes **64 automated DSP (digital signal processing) tests** covering silence, gain sharing, mute, bypass, output volume, matching outputs, and session recall. The 63 signal-processing cases run at three sample rates and three buffer sizes; one additional test checks new and legacy session files.
 
 A separate offline benchmark measures how long audio processing takes. It reports typical timings, slower callbacks, and measurements that exceed the time available for a buffer.
 

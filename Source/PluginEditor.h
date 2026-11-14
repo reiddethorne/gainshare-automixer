@@ -116,11 +116,11 @@ private:
 //==============================================================================
 /**
 */
-class DuganAutomixerAudioProcessorEditor  : public juce::AudioProcessorEditor, private juce::Timer
+class GainShareAutomixerAudioProcessorEditor  : public juce::AudioProcessorEditor, private juce::Timer
 {
 public:
-    DuganAutomixerAudioProcessorEditor (DuganAutomixerAudioProcessor&);
-    ~DuganAutomixerAudioProcessorEditor() override;
+    GainShareAutomixerAudioProcessorEditor (GainShareAutomixerAudioProcessor&);
+    ~GainShareAutomixerAudioProcessorEditor() override;
 
     //==============================================================================
     void paint (juce::Graphics&) override;
@@ -129,10 +129,10 @@ public:
 private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
-    DuganAutomixerAudioProcessor& audioProcessor;
+    GainShareAutomixerAudioProcessor& audioProcessor;
 
     static constexpr int channelCount =
-        DuganAutomixerAudioProcessor::automixerChannelCount;
+        GainShareAutomixerAudioProcessor::automixerChannelCount;
 
     std::array<ChannelStrip, channelCount> channelStrips;
     juce::ToggleButton bypassButton { "Automix On" };
@@ -144,5 +144,5 @@ private:
 
     void timerCallback() override;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DuganAutomixerAudioProcessorEditor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GainShareAutomixerAudioProcessorEditor)
 };

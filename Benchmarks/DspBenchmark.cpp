@@ -14,7 +14,7 @@
 namespace
 {
 using Clock = std::chrono::steady_clock;
-constexpr int channelCount = DuganAutomixerAudioProcessor::automixerChannelCount;
+constexpr int channelCount = GainShareAutomixerAudioProcessor::automixerChannelCount;
 constexpr double warmupSeconds = 2.0;
 
 enum class Scenario { silence, fourInputs, changingSpeakers, controlChanges };
@@ -40,7 +40,7 @@ double percentile (const std::vector<double>& sorted, double fraction)
 
 void benchmark (Scenario scenario, int sampleRate, int blockSize, int iterations)
 {
-    DuganAutomixerAudioProcessor processor;
+    GainShareAutomixerAudioProcessor processor;
     juce::AudioBuffer<float> buffer (channelCount, blockSize);
     juce::MidiBuffer midi;
     std::vector<double> timings (static_cast<size_t> (iterations));
@@ -146,7 +146,7 @@ int main (int argc, char* argv[])
         int iterations = 10000;
         if (argc == 2 && std::string (argv[1]) == "--help")
         {
-            std::cout << "Usage: DuganAutomixerDspBenchmark [callbacks-per-scenario]\n"
+            std::cout << "Usage: GainShareAutomixerDspBenchmark [callbacks-per-scenario]\n"
                          "Default: 10000; range: 1000 to 1000000. Emits CSV to stdout.\n";
             return 0;
         }

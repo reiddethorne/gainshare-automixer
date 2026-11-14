@@ -26,7 +26,7 @@ void accumulatePeak (std::atomic<float>& destination, float peak) noexcept
 }
 
 //==============================================================================
-DuganAutomixerAudioProcessor::DuganAutomixerAudioProcessor()
+GainShareAutomixerAudioProcessor::GainShareAutomixerAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
                      #if ! JucePlugin_IsMidiEffect
@@ -51,17 +51,17 @@ DuganAutomixerAudioProcessor::DuganAutomixerAudioProcessor()
         inputNames[channel] = "INPUT " + juce::String (channel + 1);
 }
 
-DuganAutomixerAudioProcessor::~DuganAutomixerAudioProcessor()
+GainShareAutomixerAudioProcessor::~GainShareAutomixerAudioProcessor()
 {
 }
 
 //==============================================================================
-const juce::String DuganAutomixerAudioProcessor::getName() const
+const juce::String GainShareAutomixerAudioProcessor::getName() const
 {
     return JucePlugin_Name;
 }
 
-bool DuganAutomixerAudioProcessor::acceptsMidi() const
+bool GainShareAutomixerAudioProcessor::acceptsMidi() const
 {
    #if JucePlugin_WantsMidiInput
     return true;
@@ -70,7 +70,7 @@ bool DuganAutomixerAudioProcessor::acceptsMidi() const
    #endif
 }
 
-bool DuganAutomixerAudioProcessor::producesMidi() const
+bool GainShareAutomixerAudioProcessor::producesMidi() const
 {
    #if JucePlugin_ProducesMidiOutput
     return true;
@@ -79,7 +79,7 @@ bool DuganAutomixerAudioProcessor::producesMidi() const
    #endif
 }
 
-bool DuganAutomixerAudioProcessor::isMidiEffect() const
+bool GainShareAutomixerAudioProcessor::isMidiEffect() const
 {
    #if JucePlugin_IsMidiEffect
     return true;
@@ -88,37 +88,37 @@ bool DuganAutomixerAudioProcessor::isMidiEffect() const
    #endif
 }
 
-double DuganAutomixerAudioProcessor::getTailLengthSeconds() const
+double GainShareAutomixerAudioProcessor::getTailLengthSeconds() const
 {
     return 0.0;
 }
 
-int DuganAutomixerAudioProcessor::getNumPrograms()
+int GainShareAutomixerAudioProcessor::getNumPrograms()
 {
     return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
                 // so this should be at least 1, even if you're not really implementing programs.
 }
 
-int DuganAutomixerAudioProcessor::getCurrentProgram()
+int GainShareAutomixerAudioProcessor::getCurrentProgram()
 {
     return 0;
 }
 
-void DuganAutomixerAudioProcessor::setCurrentProgram (int index)
+void GainShareAutomixerAudioProcessor::setCurrentProgram (int index)
 {
 }
 
-const juce::String DuganAutomixerAudioProcessor::getProgramName (int index)
+const juce::String GainShareAutomixerAudioProcessor::getProgramName (int index)
 {
     return {};
 }
 
-void DuganAutomixerAudioProcessor::changeProgramName (int index, const juce::String& newName)
+void GainShareAutomixerAudioProcessor::changeProgramName (int index, const juce::String& newName)
 {
 }
 
 //==============================================================================
-void DuganAutomixerAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void GainShareAutomixerAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
@@ -155,14 +155,14 @@ void DuganAutomixerAudioProcessor::prepareToPlay (double sampleRate, int samples
     outputPeak.store (0.0f, std::memory_order_relaxed);
 }
 
-void DuganAutomixerAudioProcessor::releaseResources()
+void GainShareAutomixerAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool DuganAutomixerAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
+bool GainShareAutomixerAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
   #if JucePlugin_IsMidiEffect
     juce::ignoreUnused (layouts);
@@ -179,7 +179,7 @@ bool DuganAutomixerAudioProcessor::isBusesLayoutSupported (const BusesLayout& la
 }
 #endif
 
-void DuganAutomixerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void GainShareAutomixerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
@@ -256,7 +256,7 @@ void DuganAutomixerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffe
         {
             const auto* channelData = buffer.getReadPointer (channel);
 
-            // Classic Dugan law: use the linear power share, not its square root.
+            // Use the linear power share as the channel gain.
             const float targetGain =
                 (powerEnvelopes[channel] + powerFloor) / totalPower;
 
@@ -301,7 +301,7 @@ void DuganAutomixerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffe
 }
 
 //==============================================================================
-float DuganAutomixerAudioProcessor::getMeterGain (
+float GainShareAutomixerAudioProcessor::getMeterGain (
     int channel) const noexcept
 {
     if (! juce::isPositiveAndBelow (channel, automixerChannelCount))
@@ -311,12 +311,12 @@ float DuganAutomixerAudioProcessor::getMeterGain (
         std::memory_order_relaxed);
 }
 
-float DuganAutomixerAudioProcessor::getAndClearOutputPeak() noexcept
+float GainShareAutomixerAudioProcessor::getAndClearOutputPeak() noexcept
 {
     return outputPeak.exchange (0.0f, std::memory_order_relaxed);
 }
 
-float DuganAutomixerAudioProcessor::getAndClearInputPeak (
+float GainShareAutomixerAudioProcessor::getAndClearInputPeak (
     int channel) noexcept
 {
     if (! juce::isPositiveAndBelow (channel, automixerChannelCount))
@@ -325,18 +325,18 @@ float DuganAutomixerAudioProcessor::getAndClearInputPeak (
     return inputPeaks[channel].exchange (0.0f, std::memory_order_relaxed);
 }
 
-void DuganAutomixerAudioProcessor::setOutputGainDb (float newGainDb) noexcept
+void GainShareAutomixerAudioProcessor::setOutputGainDb (float newGainDb) noexcept
 {
     outputGainDb.store (juce::jlimit (-24.0f, 6.0f, newGainDb),
                         std::memory_order_relaxed);
 }
 
-float DuganAutomixerAudioProcessor::getOutputGainDb() const noexcept
+float GainShareAutomixerAudioProcessor::getOutputGainDb() const noexcept
 {
     return outputGainDb.load (std::memory_order_relaxed);
 }
 
-void DuganAutomixerAudioProcessor::setInputName (
+void GainShareAutomixerAudioProcessor::setInputName (
     int channel, const juce::String& newName, bool notifyHost)
 {
     if (! juce::isPositiveAndBelow (channel, automixerChannelCount))
@@ -355,7 +355,7 @@ void DuganAutomixerAudioProcessor::setInputName (
             ChangeDetails{}.withNonParameterStateChanged (true));
 }
 
-juce::String DuganAutomixerAudioProcessor::getInputName (int channel) const
+juce::String GainShareAutomixerAudioProcessor::getInputName (int channel) const
 {
     if (! juce::isPositiveAndBelow (channel, automixerChannelCount))
         return {};
@@ -365,20 +365,20 @@ juce::String DuganAutomixerAudioProcessor::getInputName (int channel) const
 }
 
 //==============================================================================
-bool DuganAutomixerAudioProcessor::hasEditor() const
+bool GainShareAutomixerAudioProcessor::hasEditor() const
 {
     return true; // (change this to false if you choose to not supply an editor)
 }
 
-juce::AudioProcessorEditor* DuganAutomixerAudioProcessor::createEditor()
+juce::AudioProcessorEditor* GainShareAutomixerAudioProcessor::createEditor()
 {
-    return new DuganAutomixerAudioProcessorEditor (*this);
+    return new GainShareAutomixerAudioProcessorEditor (*this);
 }
 
 //==============================================================================
-void DuganAutomixerAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
+void GainShareAutomixerAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    juce::XmlElement state ("DuganAutomixerState");
+    juce::XmlElement state ("GainShareAutomixerState");
     state.setAttribute ("outputGainDb", getOutputGainDb());
     state.setAttribute ("automixOn", ! isAutomixerBypassed());
 
@@ -393,11 +393,13 @@ void DuganAutomixerAudioProcessor::getStateInformation (juce::MemoryBlock& destD
     copyXmlToBinary (state, destData);
 }
 
-void DuganAutomixerAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+void GainShareAutomixerAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     const auto state = getXmlFromBinary (data, sizeInBytes);
 
-    if (state == nullptr || ! state->hasTagName ("DuganAutomixerState"))
+    // Accept saved sessions from before the application was renamed.
+    if (state == nullptr || (! state->hasTagName ("GainShareAutomixerState")
+                             && ! state->hasTagName ("DuganAutomixerState")))
         return;
 
     setOutputGainDb (static_cast<float> (
@@ -424,5 +426,5 @@ void DuganAutomixerAudioProcessor::setStateInformation (const void* data, int si
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
-    return new DuganAutomixerAudioProcessor();
+    return new GainShareAutomixerAudioProcessor();
 }
