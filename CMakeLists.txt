@@ -62,6 +62,16 @@ target_link_libraries(DuganAutomixer
 
 include(CTest)
 
+# Timing is opt-in and is deliberately separate from pass/fail tests and CI.
+add_executable(DuganAutomixerDspBenchmark EXCLUDE_FROM_ALL Benchmarks/DspBenchmark.cpp)
+target_compile_features(DuganAutomixerDspBenchmark PRIVATE cxx_std_17)
+target_include_directories(DuganAutomixerDspBenchmark PRIVATE Source
+    $<TARGET_PROPERTY:DuganAutomixer,JUCE_GENERATED_SOURCES_DIRECTORY>)
+target_link_libraries(DuganAutomixerDspBenchmark PRIVATE
+    DuganAutomixer juce::juce_audio_utils)
+set_target_properties(DuganAutomixerDspBenchmark PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/benchmarks/$<CONFIG>")
+
 if(BUILD_TESTING)
     add_executable(DuganAutomixerDspTests Tests/DspTests.cpp)
     target_compile_features(DuganAutomixerDspTests PRIVATE cxx_std_17)

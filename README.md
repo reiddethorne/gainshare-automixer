@@ -1,113 +1,117 @@
 # DuganAutomixer
 
-[![Build](https://github.com/reiddethorne/DuganAutomixer/actions/workflows/build.yml/badge.svg)](https://github.com/reiddethorne/DuganAutomixer/actions/workflows/build.yml)
+[![macOS and Windows build and DSP tests](https://github.com/reiddethorne/DuganAutomixer/actions/workflows/build.yml/badge.svg)](https://github.com/reiddethorne/DuganAutomixer/actions/workflows/build.yml)
 
-A cross-platform, four-microphone gain-sharing automixer built with C++17 and JUCE. It runs as a standalone desktop application.
+A desktop app that automatically balances four microphones. It gives more volume to the person speaking and turns down quieter microphones, then sends the combined mix to both output channels.
 
-I built this project to learn how an automixer behaves in practice and to work through the real-time details around smoothing, metering, UI communication, and plugin state. When several microphones are open, the plugin gives more gain to the active speaker and turns down quieter inputs. The result is a mono mix sent to both output channels.
+I built this project to learn how automatic microphone mixing works and how to process live audio smoothly. It is written in C++17 using JUCE and builds as a standalone app on macOS and Windows.
 
-![DuganAutomixer interface showing four input channels, gain sharing, output metering, and level controls](assets/dugan-automixer-ui.png)
+![App interface with four microphone strips. Each strip has an editable name, input-level meter, applied-gain meter, and mute button. The right side has the automix switch, output meter, and output-volume control.](assets/dugan-automixer-ui.png)
+
+[Features](#features) · [Build the app](#build-the-app) · [Using the app](#using-the-app) · [Developer guide](docs/DEVELOPMENT.md)
 
 ## Features
 
-- Four discrete microphone inputs
-- Dugan-style gain sharing based on relative signal power
-- Per-channel mute, editable names, and input/gain meters
-- Automix bypass and -24 to +6 dB output trim
-- Smoothed gain, mute, bypass, and output-level changes
-- Session recall for names, mute states, automix state, and output gain
+- Mix four separate microphone inputs into one signal, sent to both outputs.
+- Automatically adjust each microphone's volume based on its level relative to the others.
+- Name and mute each microphone separately.
+- See incoming signal levels and how much gain (volume adjustment) each microphone receives.
+- Turn automatic mixing on or off while keeping individual mute controls active.
+- Adjust the final output volume from −24 to +6 decibels (dB).
+- Recall microphone names, mute settings, automatic mixing, and output volume between runs.
 
-## How it works
+Volume and mute changes fade smoothly to avoid sudden jumps.
 
-Each input is squared and passed through an attack/release envelope follower. The gain for a channel is its share of the total measured power:
+## What you need
 
-```text
-P_i[n] = alpha * P_i[n-1] + (1 - alpha) * x_i[n]^2
+To use the app with microphones, you need an audio interface with at least **four separate inputs and two outputs**. Both outputs carry the same mono signal; there is no left/right positioning.
 
-gain_i[n] = (P_i[n] + epsilon) / (sum(P_j[n]) + 4 * epsilon)
-```
+To build from source, you also need:
 
-With four equally powered inputs, each settles near a gain of `0.25` (`-12 dB`). When one input dominates, its gain approaches `1.0` while the others are attenuated.
+- Git and CMake 3.22 or later.
+- **macOS:** Xcode; macOS 12 is the minimum supported version.
+- **Windows:** Visual Studio with the **Desktop development with C++** workload.
 
-The envelope uses a 10 ms attack and 100 ms release, followed by 30 ms gain smoothing. Muted channels are removed from the power calculation so a loud muted microphone cannot suppress the remaining inputs.
+The repository includes JUCE 9.0.2 as a submodule, a dependency that Git downloads with the command below. Automated tests and offline benchmarks do not require an audio interface.
 
-## Real-time design
+## Build the app
 
-The part I found most interesting was keeping the audio callback separate from the interface:
+### 1. Download the source
 
-- DSP state uses fixed-size arrays, and `processBlock` does not explicitly allocate memory, access files, or acquire a mutex.
-- The audio thread publishes meter values through atomics. The UI reads them at 30 Hz and clears stored peaks after each read.
-- Input names are protected separately because the audio callback never needs to read them.
-- Mute and bypass changes are faded to avoid abrupt discontinuities.
-- Application state is serialized as XML for recall between runs.
-
-## Building
-
-The project uses CMake 3.22 or later and includes JUCE 9.0.2 as a Git submodule. It builds a standalone application on macOS and Windows.
-
-For a fresh checkout, clone the repository and its JUCE submodule together:
+Open a terminal and run:
 
 ```sh
 git clone --recurse-submodules https://github.com/reiddethorne/DuganAutomixer.git
 cd DuganAutomixer
 ```
 
-If the repository is already cloned, initialise the submodule with:
+If you already cloned the repository, run `git submodule update --init --recursive` from its folder to download JUCE.
 
-```sh
-git submodule update --init --recursive
-```
+### 2. Build for your platform
 
-### macOS
+Run the following commands from the `DuganAutomixer` folder.
 
-Install Xcode and CMake, then generate and build an Xcode project:
+#### macOS
 
 ```sh
 cmake -S . -B build/macos -G Xcode
-cmake --build build/macos --config Release \
-    --target DuganAutomixer_Standalone
+cmake --build build/macos --config Release --target DuganAutomixer_Standalone
 ```
 
-macOS 12 is the minimum deployment target. To build a universal binary, add `-DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"` to the configure command.
+Open the built app:
 
-### Windows
+```sh
+open build/macos/DuganAutomixer_artefacts/Release/Standalone/DuganAutomixer.app
+```
 
-Install CMake and Visual Studio with the Desktop development with C++ workload, then run these commands from a Developer PowerShell:
+To build for both Apple silicon and Intel Macs, add `-DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"` to the configure command (the first command above).
+
+#### Windows
+
+Run these commands in a Visual Studio Developer PowerShell:
 
 ```powershell
 cmake -S . -B build/windows -A x64
-cmake --build build/windows --config Release `
-    --target DuganAutomixer_Standalone
+cmake --build build/windows --config Release --target DuganAutomixer_Standalone
 ```
 
-The release application is written to `build/macos/DuganAutomixer_artefacts/Release/Standalone/DuganAutomixer.app` on macOS and `build/windows/DuganAutomixer_artefacts/Release/Standalone/DuganAutomixer.exe` on Windows.
+Launch the built app:
 
-The application requires an audio interface with at least four discrete inputs and two outputs. Both outputs carry the same mono mix.
-
-## DSP tests
-
-The console test runner processes generated signals directly through the processor; no audio interface is needed. It covers silence, equal inputs, a single active input, muted-input isolation, bypass, output trim, and identical stereo output at 44.1, 48, and 96 kHz with 32, 128, and 512 sample buffers (63 test cases).
-
-After configuring a build directory, build and run the tests with:
-
-```sh
-cmake --build build/macos --config Release --target DuganAutomixerDspTests
-ctest --test-dir build/macos -C Release --output-on-failure
+```powershell
+./build/windows/DuganAutomixer_artefacts/Release/Standalone/DuganAutomixer.exe
 ```
 
-On Windows, substitute `build/windows` for `build/macos`. Tests are enabled by default; configure with `-DBUILD_TESTING=OFF` to omit the test target. Both CI platforms run the tests in Release builds.
+## Using the app
+
+1. Connect your audio interface and microphones, then launch the app.
+2. Open **Options → Audio/MIDI Settings…** and select your interface and its four inputs and two outputs. Allow microphone access if your operating system asks.
+3. If the app shows **Audio input is muted to avoid feedback loop**, use **Unmute Input** after checking your monitoring setup. Headphones can help prevent speaker sound from feeding back into the microphones.
+4. Speak into each microphone and check the **IN** meters to confirm the input order. Click a microphone's name to edit it.
+5. Enable **Automix On** to balance the microphones automatically. The **GAIN** meter on each strip shows the volume adjustment applied to that input. Use **Mute** to exclude a microphone.
+6. Adjust the output **GAIN** control while watching the **OUT** meter. Lower the volume if the output clips (reaches or exceeds 0 dBFS, the digital signal ceiling).
+
+Turning off **Automix On** adds the unmuted inputs together without automatic attenuation, so the output may become louder. There is no output limiter to prevent clipping.
+
+## How automatic mixing works
+
+The app measures each microphone's signal power and gives louder inputs a larger share of the total gain. With four equally strong inputs, each receives about a quarter of its original amplitude. When one microphone dominates, its gain approaches full volume.
+
+Muted microphones do not affect the gain assigned to the remaining inputs. The level measurements and gain changes are smoothed so the mix responds gradually.
+
+For the equations and implementation details, see [how the gain sharing works](docs/DEVELOPMENT.md#how-the-gain-sharing-works).
+
+## Tests and performance
+
+The project includes **63 automated DSP (digital signal processing) tests** covering silence, gain sharing, mute, bypass, output volume, and matching outputs. They run at three sample rates and three buffer sizes.
+
+A separate offline benchmark measures how long audio processing takes. It reports typical timings, slower callbacks, and measurements that exceed the time available for a buffer.
+
+See the developer guide for [running the tests](docs/DEVELOPMENT.md#dsp-tests), [running the benchmark](docs/DEVELOPMENT.md#callback-benchmark), and [interpreting the results](docs/DEVELOPMENT.md#reading-the-benchmark-results).
 
 ## Current limitations
 
-- The channel layout is fixed at four inputs and two identical outputs.
-- There is no output limiter, so bypassing automix may require additional headroom.
-- Callback benchmarks are still to be added.
+- The layout is fixed at four inputs and two outputs carrying the same mix.
+- There is no output limiter.
+- Reliable live playback with an audio interface and the interface window active still needs manual validation. Offline tests and benchmarks do not establish this.
 
-My next step is to measure worst-case callback time rather than making assumptions about performance.
-
-## Code guide
-
-- [`Source/PluginProcessor.cpp`](Source/PluginProcessor.cpp): DSP, metering, bus layout, and state recall
-- [`Source/PluginProcessor.h`](Source/PluginProcessor.h): processor state and audio/UI communication
-- [`Source/PluginEditor.cpp`](Source/PluginEditor.cpp): controls, meters, and interface layout
-- [`Tests/DspTests.cpp`](Tests/DspTests.cpp): signal-based DSP regression tests
+For a source-file overview, see the [code guide](docs/DEVELOPMENT.md#code-guide).
