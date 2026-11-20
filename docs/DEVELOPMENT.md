@@ -22,7 +22,7 @@ The part I found most interesting was keeping the audio callback separate from t
 
 - DSP state uses fixed-size arrays, and `processBlock` does not explicitly allocate memory, access files, or acquire a mutex.
 - The audio thread publishes meter values through atomics. The UI reads them at 30 Hz and clears stored peaks after each read.
-- Input and output level bars and numeric readings rise immediately and fall at 24 dB per second with no hold delay. This display timing runs on the UI thread; clip indicators still hold for two seconds.
+- Input and output level bars rise immediately and fall at 32 dB per second with no hold delay. Numeric dBFS readings retain the highest measured peak until clicked. Clipped readings stay red and bar clip indicators stay lit until that reading is clicked to reset both. These UI peaks start fresh when the editor opens. Display timing runs on the UI thread.
 - Input names are protected separately because the audio callback never needs to read them.
 - Mute and bypass changes are faded to avoid abrupt discontinuities.
 - Application state is serialized as XML for recall between runs.

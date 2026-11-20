@@ -92,6 +92,8 @@ Launch the built app:
 5. Enable **Automix On** to balance the microphones automatically. The **GAIN** meter on each strip shows the volume adjustment applied to that input. Use **Mute** to exclude a microphone.
 6. Adjust the output **GAIN** control while watching the **OUT** meter. Lower the volume if the output clips (reaches or exceeds 0 dBFS, the digital signal ceiling).
 
+The numeric **IN** and **OUT** dBFS readings retain the highest peak. Click a reading to reset it and its clip indicator, and start measuring again. Clipped peak readings stay red and clip indicators stay lit until reset.
+
 Turning off **Automix On** adds the unmuted inputs together without automatic attenuation, so the output may become louder. There is no output limiter to prevent clipping.
 
 ## How automatic mixing works

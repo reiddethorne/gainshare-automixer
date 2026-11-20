@@ -14,7 +14,6 @@ constexpr auto secondaryText      = 0xff92979d;
 constexpr float meterFloorDb = -60.0f;
 constexpr float meterInset = 3.0f;
 constexpr float meterReleaseDbPerSecond = 32.0f;
-constexpr double clipIndicatorHoldMs = 2000.0;
 constexpr int scaleLabelHeight = 14;
 constexpr int meterTextWidth = 56;
 constexpr int outputMeterValueWidth = 70;
@@ -37,6 +36,48 @@ float levelToMeterPosition (float level)
     return juce::jlimit (0.0f, 1.0f,
                          (levelDb - meterFloorDb) / -meterFloorDb);
 }
+}
+
+//==============================================================================
+PeakLevelLabel::PeakLevelLabel()
+{
+    setTooltip ("Highest peak since reset. Click to reset peak and clip indicator.");
+    setMouseCursor (juce::MouseCursor::PointingHandCursor);
+    updateReading();
+}
+
+void PeakLevelLabel::setPeak (float newPeak)
+{
+    if (newPeak > peak)
+    {
+        peak = newPeak;
+        updateReading();
+    }
+}
+
+void PeakLevelLabel::mouseUp (const juce::MouseEvent& event)
+{
+    juce::Label::mouseUp (event);
+
+    if (event.mods.isLeftButtonDown() && event.mouseWasClicked())
+    {
+        peak = 0.0f;
+        updateReading();
+
+        if (onReset)
+            onReset();
+    }
+}
+
+void PeakLevelLabel::updateReading()
+{
+    const auto peakDb = juce::Decibels::gainToDecibels (peak, meterFloorDb);
+    const auto value = peakDb <= meterFloorDb + 0.1f
+                           ? juce::String ("-inf")
+                           : juce::String (peakDb, 1);
+    setText (value + " dBFS", juce::dontSendNotification);
+    setColour (juce::Label::textColourId,
+               juce::Colour (peak >= 1.0f ? meterClipColour : secondaryText));
 }
 
 //==============================================================================
@@ -170,25 +211,20 @@ void InputMeterBackground::setLevel (float newLevel)
     meter.setGain (juce::jlimit (0.0f, 1.0f,
         (displayedLevelDb - meterFloorDb) / -meterFloorDb));
 
-    const auto wasActive = clipIndicatorActive;
-
-    if (newLevel >= 1.0f)
+    if (newLevel >= 1.0f && ! clipIndicatorActive)
     {
         clipIndicatorActive = true;
-        clipIndicatorExpiryMs = now + clipIndicatorHoldMs;
-    }
-    else if (clipIndicatorActive && now >= clipIndicatorExpiryMs)
-    {
-        clipIndicatorActive = false;
-    }
-
-    if (clipIndicatorActive != wasActive)
         repaint();
+    }
 }
 
-bool InputMeterBackground::isClipIndicatorActive() const noexcept
+void InputMeterBackground::resetClipIndicator()
 {
-    return clipIndicatorActive;
+    if (clipIndicatorActive)
+    {
+        clipIndicatorActive = false;
+        repaint();
+    }
 }
 
 void InputMeterBackground::paint (juce::Graphics& g)
@@ -258,9 +294,7 @@ ChannelStrip::ChannelStrip()
 
     inputValueLabel.setJustificationType (juce::Justification::centred);
     inputValueLabel.setFont (juce::FontOptions (11.0f));
-    inputValueLabel.setColour (juce::Label::textColourId,
-                               juce::Colour (secondaryText));
-    inputValueLabel.setText ("-inf dBFS", juce::dontSendNotification);
+    inputValueLabel.onReset = [this] { inputMeter.resetClipIndicator(); };
 
     gainValueLabel.setJustificationType (juce::Justification::centred);
     gainValueLabel.setFont (juce::FontOptions (12.0f));
@@ -319,16 +353,7 @@ void ChannelStrip::setInputPeak (float newPeak)
 {
     inputMeter.setLevel (newPeak);
 
-    const auto peakDb = inputMeter.getDisplayedLevelDb();
-    const auto value = peakDb <= meterFloorDb + 0.1f
-                           ? juce::String ("-inf")
-                           : juce::String (peakDb, 1);
-    inputValueLabel.setText (value + " dBFS",
-                             juce::dontSendNotification);
-    inputValueLabel.setColour (juce::Label::textColourId,
-                               inputMeter.isClipIndicatorActive()
-                                   ? juce::Colour (meterClipColour)
-                                   : juce::Colour (secondaryText));
+    inputValueLabel.setPeak (newPeak);
 }
 
 void ChannelStrip::setMuted (bool shouldBeMuted)
@@ -398,11 +423,9 @@ GainShareAutomixerAudioProcessorEditor::GainShareAutomixerAudioProcessorEditor (
 
     addAndMakeVisible (bypassButton);
 
-    outputPeakLabel.setText ("-inf dBFS", juce::dontSendNotification);
     outputPeakLabel.setJustificationType (juce::Justification::centred);
     outputPeakLabel.setFont (juce::FontOptions (11.0f));
-    outputPeakLabel.setColour (juce::Label::textColourId,
-                               juce::Colour (secondaryText));
+    outputPeakLabel.onReset = [this] { outputPeakMeter.resetClipIndicator(); };
     addAndMakeVisible (outputPeakLabel);
     addAndMakeVisible (outputPeakMeter);
 
@@ -474,16 +497,7 @@ void GainShareAutomixerAudioProcessorEditor::timerCallback()
 
     const auto peak = audioProcessor.getAndClearOutputPeak();
     outputPeakMeter.setLevel (peak);
-    const auto peakDb = outputPeakMeter.getDisplayedLevelDb();
-    const auto value = peakDb <= meterFloorDb + 0.1f
-                           ? juce::String ("-inf")
-                           : juce::String (peakDb, 1);
-    outputPeakLabel.setText (value + " dBFS",
-                             juce::dontSendNotification);
-    outputPeakLabel.setColour (juce::Label::textColourId,
-                               outputPeakMeter.isClipIndicatorActive()
-                                   ? juce::Colour (meterClipColour)
-                                   : juce::Colour (secondaryText));
+    outputPeakLabel.setPeak (peak);
 }
 
 //==============================================================================

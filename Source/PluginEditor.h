@@ -5,6 +5,21 @@
 #include <array>
 #include <functional>
 
+// Retains the highest measured level until the reading is clicked.
+class PeakLevelLabel : public juce::Label
+{
+public:
+    PeakLevelLabel();
+    void setPeak (float newPeak);
+    void mouseUp (const juce::MouseEvent& event) override;
+
+    std::function<void()> onReset;
+
+private:
+    void updateReading();
+    float peak = 0.0f;
+};
+
 //==============================================================================
 // Draws the animated portion of a gain or peak meter. The component
 // is opaque so repainting it never requires JUCE to redraw the static artwork
@@ -61,8 +76,7 @@ public:
     ~InputMeterBackground() override = default;
 
     void setLevel (float newLevel);
-    float getDisplayedLevelDb() const noexcept { return displayedLevelDb; }
-    bool isClipIndicatorActive() const noexcept;
+    void resetClipIndicator();
     void paint (juce::Graphics& g) override;
     void resized() override;
 
@@ -73,7 +87,6 @@ private:
     GainMeter meter { GainMeter::ColourMode::peak };
     float displayedLevelDb = -60.0f;
     double lastUpdateMs = 0.0;
-    double clipIndicatorExpiryMs = 0.0;
     bool clipIndicatorActive = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (InputMeterBackground)
@@ -97,7 +110,7 @@ public:
 
 private:
     juce::Label inputNameLabel;
-    juce::Label inputValueLabel;
+    PeakLevelLabel inputValueLabel;
     juce::Label gainValueLabel;
     juce::Label inputMeterLabel;
     juce::Label gainMeterLabel;
@@ -127,7 +140,7 @@ private:
 
     std::array<ChannelStrip, channelCount> channelStrips;
     juce::ToggleButton bypassButton { "Automix On" };
-    juce::Label outputPeakLabel;
+    PeakLevelLabel outputPeakLabel;
     juce::Label outputPeakMeterLabel;
     InputMeterBackground outputPeakMeter;
     juce::Label outputGainLabel;
