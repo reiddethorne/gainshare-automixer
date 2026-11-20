@@ -2,7 +2,9 @@
 
 [![macOS and Windows build and DSP tests](https://github.com/reiddethorne/gainshare-automixer/actions/workflows/build.yml/badge.svg)](https://github.com/reiddethorne/gainshare-automixer/actions/workflows/build.yml)
 
-A desktop app that automatically balances four microphones. It gives more volume to the person speaking and turns down quieter microphones, then sends the combined mix to both output channels.
+A cross-platform desktop app that automatically balances four microphones. It gives more volume to the person speaking and turns down quieter microphones, then sends the combined mix to both output channels.
+
+This automixer is useful for panel discussions, podcasts, interviews, and meetings where several microphones are open at once. It reduces the need to ride individual faders as people take turns speaking, while keeping quieter microphones from adding unnecessary background noise.
 
 I built this project to learn how automatic microphone mixing works and how to process live audio smoothly. It is written in C++17 using JUCE and builds as a standalone app on macOS and Windows.
 
@@ -20,11 +22,11 @@ I built this project to learn how automatic microphone mixing works and how to p
 - Adjust the final output volume from −24 to +6 decibels (dB).
 - Recall microphone names, mute settings, automatic mixing, and output volume between runs.
 
-Volume and mute changes fade smoothly to avoid sudden jumps.
+Volume and mute changes fade smoothly to avoid sudden jumps and audio artifacts.
 
 ## What you need
 
-To use the app with microphones, you need an audio interface with at least **four separate inputs and two outputs**. Both outputs carry the same mono signal; there is no left/right positioning.
+To use the app with microphones, you need an audio interface. Both outputs carry the same mono signal; there is no left/right positioning.
 
 To build from source, you also need:
 
@@ -110,8 +112,8 @@ See the developer guide for [running the tests](docs/DEVELOPMENT.md#dsp-tests), 
 
 ## Current limitations
 
-- The layout is fixed at four inputs and two outputs carrying the same mix.
+- The layout is fixed at four inputs and two outputs carrying the same mono mix.
 - There is no output limiter.
-- Reliable live playback with an audio interface and the interface window active still needs manual validation. Offline tests and benchmarks do not establish this.
+- There is no way to weight channels or make one channel louder than the others.
 
 For a source-file overview, see the [code guide](docs/DEVELOPMENT.md#code-guide).

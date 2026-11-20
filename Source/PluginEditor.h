@@ -1,11 +1,3 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin editor.
-
-  ==============================================================================
-*/
-
 #pragma once
 
 #include <JuceHeader.h>
@@ -85,7 +77,7 @@ private:
 };
 
 //==============================================================================
-// Groups the label and gain meter belonging to one automixer channel.
+// Groups the input name, input and gain meters, and mute control for one channel.
 class ChannelStrip : public juce::Component
 {
 public:
@@ -114,8 +106,6 @@ private:
 };
 
 //==============================================================================
-/**
-*/
 class GainShareAutomixerAudioProcessorEditor  : public juce::AudioProcessorEditor, private juce::Timer
 {
 public:
@@ -127,8 +117,6 @@ public:
     void resized() override;
 
 private:
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
     GainShareAutomixerAudioProcessor& audioProcessor;
 
     static constexpr int channelCount =

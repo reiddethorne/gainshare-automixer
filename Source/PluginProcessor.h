@@ -1,11 +1,3 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
-
 #pragma once
 
 #include <JuceHeader.h>
@@ -13,8 +5,6 @@
 #include <atomic>
 
 //==============================================================================
-/**
-*/
 class GainShareAutomixerAudioProcessor  : public juce::AudioProcessor
 {
 public:
@@ -61,6 +51,7 @@ public:
     //==============================================================================
     // Custom method to get the current gain for a specific channel for the meter display
     float getMeterGain (int channel) const noexcept;
+    // Return the highest linear amplitude since the last read, then clear it.
     float getAndClearInputPeak (int channel) noexcept;
     float getAndClearOutputPeak() noexcept;
 
@@ -100,8 +91,10 @@ private:
     std::atomic<float> outputGainDb { 0.0f };
     std::atomic<bool> bypassed { false };
     std::array<std::atomic<bool>, automixerChannelCount> channelMuted {};
+    // Names require locking; never access them from the audio callback.
     std::array<juce::String, automixerChannelCount> inputNames;
     mutable juce::CriticalSection inputNamesLock;
+    // Envelope and smoothing state is owned by the audio thread.
     std::array<float, automixerChannelCount> powerEnvelopes {};
     std::array<float, automixerChannelCount> smoothedGains {};
     std::array<juce::SmoothedValue<float>, automixerChannelCount> muteGains;

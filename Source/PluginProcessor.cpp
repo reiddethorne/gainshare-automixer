@@ -1,11 +1,3 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
-
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
@@ -16,6 +8,7 @@ namespace
 {
 void accumulatePeak (std::atomic<float>& destination, float peak) noexcept
 {
+    // Retry if the UI clears the peak while we update it.
     auto previousPeak = destination.load (std::memory_order_relaxed);
     while (previousPeak < peak
            && ! destination.compare_exchange_weak (
@@ -264,6 +257,7 @@ void GainShareAutomixerAudioProcessor::processBlock (juce::AudioBuffer<float>& b
             smoothedGains[channel] =
                 gainCoefficient * smoothedGains[channel]
                 + (1.0f - gainCoefficient) * targetGain;
+            // Crossfade from unity gain (wet = 0) to automatic gain (wet = 1).
             const auto effectiveGain = 1.0f + wet * (smoothedGains[channel] - 1.0f);
             const auto muteGain = muteGains[channel].getNextValue();
 
@@ -275,6 +269,7 @@ void GainShareAutomixerAudioProcessor::processBlock (juce::AudioBuffer<float>& b
         // The automixer produces one mono mix, sent equally to both sides of
         // the stereo output bus.
         const auto outputSample = mixedOutput * outputGain.getNextValue();
+        // Outputs share input storage; read all inputs before writing this sample.
         leftOutput[sample] = outputSample;
         rightOutput[sample] = outputSample;
         blockOutputPeak = juce::jmax (blockOutputPeak,
@@ -295,8 +290,7 @@ void GainShareAutomixerAudioProcessor::processBlock (juce::AudioBuffer<float>& b
             (1.0f + wet * (smoothedGains[channel] - 1.0f))
                 * muteGains[channel].getCurrentValue(),
             std::memory_order_relaxed);
-        // Relaxed memory order is where the atomic value is still safe, but there is no ordering guarantee for other memory operations.
-        // It is used here because we don't need strict ordering for the meter display, and it can improve performance.
+        // Meter values are independent, so relaxed ordering is sufficient.
     }
 }
 

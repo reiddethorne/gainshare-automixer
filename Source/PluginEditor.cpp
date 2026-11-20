@@ -1,11 +1,3 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin editor.
-
-  ==============================================================================
-*/
-
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
@@ -367,9 +359,6 @@ void ChannelStrip::resized()
 GainShareAutomixerAudioProcessorEditor::GainShareAutomixerAudioProcessorEditor (GainShareAutomixerAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
-    // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
-
     for (int channel = 0; channel < channelCount; ++channel)
     {
         channelStrips[channel].setInputName (
@@ -389,8 +378,7 @@ GainShareAutomixerAudioProcessorEditor::GainShareAutomixerAudioProcessorEditor (
 
     setSize (840, 320);
 
-    // Start the timer to update the meter levels
-    startTimerHz(30); // Update at 30 Hz
+    startTimerHz(30);
 
     bypassButton.setToggleState (! audioProcessor.isAutomixerBypassed(),
                                  juce::dontSendNotification);
@@ -451,7 +439,6 @@ GainShareAutomixerAudioProcessorEditor::GainShareAutomixerAudioProcessorEditor (
 
 GainShareAutomixerAudioProcessorEditor::~GainShareAutomixerAudioProcessorEditor()
 {
-    // Stop the timer when the editor is destroyed
     stopTimer();
 }
 
