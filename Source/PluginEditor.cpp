@@ -13,6 +13,7 @@ constexpr auto secondaryText      = 0xff92979d;
 
 constexpr float meterFloorDb = -60.0f;
 constexpr float meterInset = 3.0f;
+constexpr float meterReleaseDbPerSecond = 32.0f;
 constexpr double clipIndicatorHoldMs = 2000.0;
 constexpr int scaleLabelHeight = 14;
 constexpr int meterTextWidth = 56;
@@ -159,9 +160,16 @@ InputMeterBackground::InputMeterBackground()
 
 void InputMeterBackground::setLevel (float newLevel)
 {
-    meter.setGain (levelToMeterPosition (newLevel));
-
     const auto now = juce::Time::getMillisecondCounterHiRes();
+    const auto levelDb = juce::Decibels::gainToDecibels (newLevel, meterFloorDb);
+
+    const auto releaseSeconds = static_cast<float> ((now - lastUpdateMs) / 1000.0);
+    displayedLevelDb = juce::jmax (
+        levelDb, displayedLevelDb - meterReleaseDbPerSecond * releaseSeconds);
+    lastUpdateMs = now;
+    meter.setGain (juce::jlimit (0.0f, 1.0f,
+        (displayedLevelDb - meterFloorDb) / -meterFloorDb));
+
     const auto wasActive = clipIndicatorActive;
 
     if (newLevel >= 1.0f)
@@ -311,7 +319,7 @@ void ChannelStrip::setInputPeak (float newPeak)
 {
     inputMeter.setLevel (newPeak);
 
-    const auto peakDb = juce::Decibels::gainToDecibels (newPeak, meterFloorDb);
+    const auto peakDb = inputMeter.getDisplayedLevelDb();
     const auto value = peakDb <= meterFloorDb + 0.1f
                            ? juce::String ("-inf")
                            : juce::String (peakDb, 1);
@@ -466,7 +474,7 @@ void GainShareAutomixerAudioProcessorEditor::timerCallback()
 
     const auto peak = audioProcessor.getAndClearOutputPeak();
     outputPeakMeter.setLevel (peak);
-    const auto peakDb = juce::Decibels::gainToDecibels (peak, meterFloorDb);
+    const auto peakDb = outputPeakMeter.getDisplayedLevelDb();
     const auto value = peakDb <= meterFloorDb + 0.1f
                            ? juce::String ("-inf")
                            : juce::String (peakDb, 1);

@@ -61,6 +61,7 @@ public:
     ~InputMeterBackground() override = default;
 
     void setLevel (float newLevel);
+    float getDisplayedLevelDb() const noexcept { return displayedLevelDb; }
     bool isClipIndicatorActive() const noexcept;
     void paint (juce::Graphics& g) override;
     void resized() override;
@@ -70,6 +71,8 @@ public:
 private:
     static constexpr int scaleWidth = 32;
     GainMeter meter { GainMeter::ColourMode::peak };
+    float displayedLevelDb = -60.0f;
+    double lastUpdateMs = 0.0;
     double clipIndicatorExpiryMs = 0.0;
     bool clipIndicatorActive = false;
 
