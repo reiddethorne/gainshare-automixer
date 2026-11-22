@@ -8,9 +8,13 @@ This automixer is useful for panel discussions, podcasts, interviews, and meetin
 
 I built this project to learn how automatic microphone mixing works and how to process live audio smoothly. It is written in C++17 using JUCE and builds as a standalone app on macOS and Windows.
 
-![App interface with four microphone strips. Each strip has an editable name, input-level meter, applied-gain meter, and mute button. The right side has the automix switch, output meter, and output-volume control.](assets/gainshare-automixer-ui.png)
+[Demo](#demo) · [Features](#features) · [Build the app](#build-the-app) · [Using the app](#using-the-app) · [Developer guide](docs/DEVELOPMENT.md)
 
-[Features](#features) · [Build the app](#build-the-app) · [Using the app](#using-the-app) · [Developer guide](docs/DEVELOPMENT.md)
+## Demo
+
+[![Watch the GainShare demo](assets/gainshare-automixer-ui.png)](https://youtu.be/CHABfrVw4EQ)
+
+Watch and hear GainShare with automatic mixing off and on. Headphones recommended.
 
 ## Features
 
